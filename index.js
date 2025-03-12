@@ -1,5 +1,3 @@
-console.log("Bot is starting...");  // <-- This will confirm if the code is executing
-
 require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
 
@@ -52,59 +50,50 @@ client.on('guildMemberAdd', async (member) => {
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 require('dotenv').config();
 
-async function getTwitchOAuthToken() {
-    const url = "https://id.twitch.tv/oauth2/token";
-    const params = new URLSearchParams({
-        client_id: process.env.TWITCH_CLIENT_ID,
-        client_secret: process.env.TWITCH_CLIENT_SECRET,
-        grant_type: "client_credentials",
-    });
+const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
+const TWITCH_OAUTH_TOKEN = process.env.TWITCH_OAUTH_TOKEN;
+const TWITCH_USERNAME = process.env.TWITCH_USERNAME;
+const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
 
-    const response = await fetch(url, {
-        method: "POST",
-        body: params,
-    });
+let wasLive = false; // Variable to track live status
 
-    const data = await response.json();
-    return data.access_token;
-}
-
+// Function to check if the user is live on Twitch
 async function isLive() {
-    const token = await getTwitchOAuthToken();
-    const url = `https://api.twitch.tv/helix/streams?user_login=${process.env.TWITCH_CHANNEL_NAME}`;
+  const response = await fetch(`https://api.twitch.tv/helix/streams?user_login=${TWITCH_USERNAME}`, {
+    headers: {
+      'Client-ID': TWITCH_CLIENT_ID,
+      'Authorization': `Bearer ${TWITCH_OAUTH_TOKEN}`,
+    },
+  });
 
-    const response = await fetch(url, {
-        headers: {
-            "Client-ID": process.env.TWITCH_CLIENT_ID,
-            "Authorization": `Bearer ${token}`,
-        },
-    });
+  const data = await response.json();
 
-    const data = await response.json();
-    return data.data.length > 0 ? data.data[0] : null;
+  // Return true if the stream is live, false if not
+  return data.data && data.data.length > 0;
 }
 
-client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag}!`);
-    checkLiveStatus(); // Start checking immediately
-});
-
-// Function to check Twitch live status and send a message
+// Function to check live status and send a message if the status changes
 async function checkLiveStatus() {
-    const liveStream = await isLive();
+  const live = await isLive();
 
-    if (liveStream) {
-        const discordChannel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
-        if (discordChannel) {
-            discordChannel.send(`🎥 **${process.env.TWITCH_CHANNEL_NAME}** is now live on Twitch!\n📺 Watch here: https://www.twitch.tv/${process.env.TWITCH_CHANNEL_NAME}`);
-        }
-    } else {
-        console.log("Not live.");
-    }
-
-    // Check every 5 minutes
-    setTimeout(checkLiveStatus, 300000);
+  if (live && !wasLive) {
+    // If you go live and it hasn't been recorded yet, send the message
+    wasLive = true; // Set flag that you're live
+    const channel = client.channels.cache.get(DISCORD_CHANNEL_ID);
+    channel.send(`I am live yippiii! Check it out here: https://www.twitch.tv/${TWITCH_USERNAME}`);
+  } else if (!live && wasLive) {
+    // If you go offline and then back live, reset the flag
+    wasLive = false; // Set flag that you're no longer live
+  }
 }
+
+// Log in to Discord bot
+client.once('ready', () => {
+  console.log('Bot is ready!');
+  
+  // Check the live status every minute
+  setInterval(checkLiveStatus, 60000); // Check every 60 seconds
+});
 
 client.login(process.env.BOT_TOKEN);
 
