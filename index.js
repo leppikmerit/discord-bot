@@ -80,7 +80,7 @@ async function checkLiveStatus() {
     // If you go live and it hasn't been recorded yet, send the message
     wasLive = true; // Set flag that you're live
     const channel = client.channels.cache.get(DISCORD_CHANNEL_ID);
-    channel.send(`I am live yippiii! Check it out here: https://www.twitch.tv/${TWITCH_USERNAME}`);
+    channel.send(`@everyone I\'m live yippiiii! Check it out here: https://www.twitch.tv/${TWITCH_USERNAME}`);
   } else if (!live && wasLive) {
     // If you go offline and then back live, reset the flag
     wasLive = false; // Set flag that you're no longer live
