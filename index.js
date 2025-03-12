@@ -98,10 +98,4 @@ async function checkLiveStatus() {
     setTimeout(checkLiveStatus, 300000);
 }
 
-// Start the bot
-client.once('ready', () => {
-    console.log(`✅ Logged in as ${client.user.tag}`);
-    checkLiveStatus(); // Start checking Twitch
-});
-
 client.login(process.env.BOT_TOKEN);
