@@ -51,31 +51,36 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 require('dotenv').config();
 
 async function getTwitchOAuthToken() {
-  const url = "https://id.twitch.tv/oauth2/token";
-  const params = new URLSearchParams({
-      client_id: process.env.TWITCH_CLIENT_ID,
-      client_secret: process.env.TWITCH_CLIENT_SECRET,
-      grant_type: "client_credentials",
-  });
+    const url = "https://id.twitch.tv/oauth2/token";
+    const params = new URLSearchParams({
+        client_id: process.env.TWITCH_CLIENT_ID,
+        client_secret: process.env.TWITCH_CLIENT_SECRET,
+        grant_type: "client_credentials",
+    });
 
-  const response = await fetch(url, { method: "POST", body: params });
-  const data = await response.json();
-  return data.access_token;
+    const response = await fetch(url, {
+        method: "POST",
+        body: params,
+    });
+
+    const data = await response.json();
+    return data.access_token;
 }
 
+
 async function isLive() {
-  const token = await getTwitchOAuthToken();
-  const url = `https://api.twitch.tv/helix/streams?user_login=${process.env.TWITCH_CHANNEL_NAME}`;
+    const token = await getTwitchOAuthToken();
+    const url = `https://api.twitch.tv/helix/streams?user_login=${process.env.TWITCH_CHANNEL_NAME}`;
 
-  const response = await fetch(url, {
-      headers: {
-          "Client-ID": process.env.TWITCH_CLIENT_ID,
-          "Authorization": `Bearer ${token}`,
-      },
-  });
+    const response = await fetch(url, {
+        headers: {
+            "Client-ID": process.env.TWITCH_CLIENT_ID,
+            "Authorization": `Bearer ${token}`,
+        },
+    });
 
-  const data = await response.json();
-  return data.data.length > 0 ? data.data[0] : null;
+    const data = await response.json();
+    return data.data.length > 0 ? data.data[0] : null;
 }
 
 // Track if we already sent a notification
@@ -87,7 +92,7 @@ async function checkLiveStatus() {
 
     if (liveStream && !alreadyNotified) {
         if (discordChannel) {
-            discordChannel.send(`🎥 **${process.env.TWITCH_CHANNEL_NAME}** is now live on Twitch!\n📺 Watch here: https://www.twitch.tv/${process.env.TWITCH_CHANNEL_NAME}`);
+            discordChannel.send(`@everyone\n🎥 **${process.env.TWITCH_CHANNEL_NAME}** is now live on Twitch!\n📺 Watch here: https://www.twitch.tv/${process.env.TWITCH_CHANNEL_NAME}`);
             alreadyNotified = true; // Mark as notified
         }
     } else if (!liveStream) {
@@ -97,5 +102,11 @@ async function checkLiveStatus() {
     // Check every 5 minutes
     setTimeout(checkLiveStatus, 300000);
 }
+
+// Start the bot
+client.once('ready', () => {
+    console.log(`✅ Logged in as ${client.user.tag}`);
+    checkLiveStatus(); // Start checking Twitch
+});
 
 client.login(process.env.BOT_TOKEN);
