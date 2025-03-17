@@ -10,15 +10,6 @@ const client = new Client({
     ]
 });
 
-client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag}!`);
-});
-
-client.login(process.env.BOT_TOKEN).catch((error) => {
-    console.error("❌ Login failed:", error);
-});
-
-
 //AUTO ROLE
 
 const AUTO_ROLE_ID = '1349303248867164234'; // Replace with your role ID
@@ -124,8 +115,11 @@ async function checkLiveStatus() {
 // Start the bot and begin checking live status
 client.once('ready', () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
-    checkLiveStatus(); // Start checking Twitch
+    
+    // Start checking Twitch
+    checkLiveStatus();
 });
+
 
 
 client.login(process.env.BOT_TOKEN);
