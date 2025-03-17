@@ -109,10 +109,10 @@ async function checkLiveStatus() {
     const discordChannel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
 
     if (liveStream && !wasLive) {
+        setLiveStatus(true); //update live status
         if (discordChannel) {
             discordChannel.send(`@everyone\n🎥 **${process.env.TWITCH_CHANNEL_NAME}** is now live on Twitch!\n📺 Watch here: https://www.twitch.tv/${process.env.TWITCH_CHANNEL_NAME}`);
-            setLiveStatus(true); // Mark as live
-        }
+            }
     } else if (!liveStream) {
         setLiveStatus(false); // Reset when the stream ends
     }
