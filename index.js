@@ -1,5 +1,7 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const fs = require('fs');
 
 const client = new Client({
     intents: [
@@ -11,20 +13,18 @@ const client = new Client({
 });
 
 //AUTO ROLE
-
 const AUTO_ROLE_ID = '1349303248867164234'; // Replace with your role ID
-
 client.on('guildMemberAdd', async (member) => {
     try {
         console.log(`New member joined: ${member.user.tag}`);
         const role = member.guild.roles.cache.get(AUTO_ROLE_ID);
-        
+
         // Check if the role exists
         if (!role) {
             console.log("❌ Role not found! Check the role ID.");
             return;
         }
-        
+
         console.log(`Attempting to assign role ${role.name} to ${member.user.tag}`);
 
         // Attempt to assign the role
@@ -35,13 +35,7 @@ client.on('guildMemberAdd', async (member) => {
     }
 });
 
-
 //TWITCH
-
-const fs = require('fs');
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-require('dotenv').config();
-
 const liveStatusPath = './liveStatus.json';
 
 // Function to get the saved live status
@@ -100,10 +94,10 @@ async function checkLiveStatus() {
     const discordChannel = client.channels.cache.get(process.env.DISCORD_CHANNEL_ID);
 
     if (liveStream && !wasLive) {
-        setLiveStatus(true); //update live status
+        setLiveStatus(true); // Update live status
         if (discordChannel) {
             discordChannel.send(`@everyone\n🎥 **${process.env.TWITCH_CHANNEL_NAME}** is now live on Twitch!\n📺 Watch here: https://www.twitch.tv/${process.env.TWITCH_CHANNEL_NAME}`);
-            }
+        }
     } else if (!liveStream) {
         setLiveStatus(false); // Reset when the stream ends
     }
@@ -112,52 +106,43 @@ async function checkLiveStatus() {
     setTimeout(checkLiveStatus, 300000);
 }
 
-// Start the bot and begin checking live status
 client.once('ready', () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
-    
-    // Start checking Twitch
-    checkLiveStatus();
+    checkLiveStatus(); // Start checking Twitch
 });
 
-
-
-client.login(process.env.BOT_TOKEN);
-
-
-
-//someone joins the server
+// User events
 client.on('guildMemberAdd', (member) => {
-    const channel = member.guild.systemChannel || member.guild.channels.cache.find(ch => ch.name === 'moderator-only'); 
+    const channel = member.guild.systemChannel || member.guild.channels.cache.find(ch => ch.name === 'moderator-only');
     if (channel) {
         channel.send(`👋 Welcome, ${member}!`);
     }
 });
 
-//someone leaves the server
 client.on('guildMemberRemove', (member) => {
-    const channel = member.guild.systemChannel || member.guild.channels.cache.find(ch => ch.name === 'moderator-only'); 
+    const channel = member.guild.systemChannel || member.guild.channels.cache.find(ch => ch.name === 'moderator-only');
     if (channel) {
         channel.send(`😢 ${member.user.tag} has left the server.`);
     }
 });
 
-//someone edited a message
 client.on('messageUpdate', (oldMessage, newMessage) => {
     if (oldMessage.author.bot) return;
-    const logChannel = oldMessage.guild.channels.cache.find(ch => ch.name === 'moderator-only'); 
+    const logChannel = oldMessage.guild.channels.cache.find(ch => ch.name === 'moderator-only');
     if (logChannel) {
         logChannel.send(`✏️ **Message edited** by ${oldMessage.author.tag} in ${oldMessage.channel}:\n**Before:** ${oldMessage.content}\n**After:** ${newMessage.content}`);
     }
 });
 
-//someone deleted a message
 client.on('messageDelete', (message) => {
     if (message.author.bot) return;
-    const logChannel = message.guild.channels.cache.find(ch => ch.name === 'moderator-only'); 
+    const logChannel = message.guild.channels.cache.find(ch => ch.name === 'moderator-only');
     if (logChannel) {
         logChannel.send(`🗑 **Message deleted** by ${message.author.tag} in ${message.channel}:\n**Content:** ${message.content}`);
     }
 });
 
-
+// Login the bot
+client.login(process.env.BOT_TOKEN).catch((error) => {
+    console.error("❌ Login failed:", error);
+});
