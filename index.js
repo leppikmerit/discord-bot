@@ -127,7 +127,12 @@ client.on('guildMemberRemove', (member) => {
 });
 
 client.on('messageUpdate', (oldMessage, newMessage) => {
-    if (oldMessage.author.bot) return;
+    // Ignore bots
+    if (oldMessage.author?.bot || newMessage.author?.bot) return;
+
+    // Check if content actually changed
+    if (oldMessage.content === newMessage.content) return;
+
     const logChannel = oldMessage.guild.channels.cache.find(ch => ch.name === 'moderator-only');
     if (logChannel) {
         logChannel.send(`✏️ **Message edited** by ${oldMessage.author.tag} in ${oldMessage.channel}:\n**Before:** ${oldMessage.content}\n**After:** ${newMessage.content}`);
